@@ -45,9 +45,9 @@ module Rack
         'http'
       end
 
-      if redirect_required?
+      if redirect_required? && redirect_allowed?
         call_before_redirect
-        modify_location_and_redirect 
+        modify_location_and_redirect
       elsif ssl_request?
         status, headers, body = @app.call(env)
         flag_cookies_as_secure!(headers) if @options[:force_secure_cookies]
@@ -62,6 +62,10 @@ module Rack
 
     def redirect_required?
       scheme_mismatch? || host_mismatch?
+    end
+
+    def redirect_allowed?
+      @scheme
     end
 
     def ignore?
@@ -150,7 +154,7 @@ module Rack
     end
 
     def replace_scheme(uri, scheme)
-      return uri if not scheme_mismatch?
+      return uri unless scheme_mismatch?
 
       port = adjust_port_to(scheme)
       uri_parts = URI.split(uri)

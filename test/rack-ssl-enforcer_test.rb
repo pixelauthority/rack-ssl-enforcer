@@ -133,6 +133,22 @@ class TestRackSslEnforcer < Test::Unit::TestCase
       assert_equal 200, last_response.status
       assert_equal 'Hello world!', last_response.body
     end
+
+    should 'not redirect if SSL constraints are not enforceable' do
+      mock_app :only_hosts => ["example.net", 'example.com'], :redirect_to => 'https://www.google.com'
+
+      get 'https://www.example.org/'
+      assert_equal 200, last_response.status
+      assert_equal 'Hello world!', last_response.body
+    end
+
+    should 'redirect if SSL constraints are enforceable' do
+      mock_app :only_hosts => ["example.net", 'example.com'], :redirect_to => 'https://www.google.com'
+
+      get 'https://example.com/'
+      assert_equal 301, last_response.status
+      assert_equal 'https://www.google.com/', last_response.location
+    end
   end
 
   context ":before_redirect" do
